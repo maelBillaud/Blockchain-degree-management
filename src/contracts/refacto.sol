@@ -21,8 +21,6 @@ contract DegreeToken is ERC20 {
 
 contract DegreeManagement {
 
-    
-    
     struct Etablissement {
         uint256 idEes;
         string nom;
@@ -79,13 +77,13 @@ contract DegreeManagement {
     }
 
     uint nombreEtablissement;
-    uint nombreEtudiant;
     uint nombreEntreprise;
+    uint nombreEtudiant;
     uint nombreDiplome;
 
-    mapping (uint => Etablissement) public etablissements;
+    mapping (address => Etablissement) public etablissements;
+    mapping (address => Entreprise) public entreprises;
     mapping (uint => Etudiant) public etudiants;
-    mapping (uint => Entreprise) public entreprises;
     mapping (uint => Diplome) public diplomes;
 
     constructor() {
@@ -95,7 +93,15 @@ contract DegreeManagement {
         nombreDiplome = 0;
     }
 
-    function creerEtablissement (Etablissement infoEtablissement) public {
+    function estAgentValideEtablissement (address agent) private returns (bool) {
+        return (etablissements[agent] != 0);
+    }
+
+    function estAgentValideEntreprise (address agent) private returns (bool) {
+        return (entreprises[agent] != 0);
+    }
+
+    function creerEtablissement (Etablissement memory infoEtablissement) public {
         Etablissement memory etablissement;
         nombreEtablissement++;
 
@@ -107,6 +113,65 @@ contract DegreeManagement {
         etablissement.siteWeb = infoEtablissement.siteWeb;
         etablissement.idAgent = msg.sender;
 
-        etablissements[nombreEtablissement] = etablissement;
+        etablissements[msg.sender] = etablissement;
+    }
+
+    function creerEntreprise (Entreprise memory infoEntreprise) public {
+        Entreprise memory entreprise;
+        nombreEntreprise++;
+
+        entreprise.idEntreprise = nombreEntreprise;
+        entreprise.nom = infoEntreprise.nom;
+        entreprise.secteur = infoEntreprise.secteur;
+        entreprise.dateCreation = infoEntreprise.dateCreation;
+        entreprise.classificationTaille = infoEntreprise.classificationTaille;
+        entreprise.pays = infoEntreprise.pays;
+        entreprise.adresse = infoEntreprise.adresse;
+        entreprise.courriel = infoEntreprise.courriel;
+        entreprise.telephone = infoEntreprise.telephone;
+        entreprise.siteWeb = infoEntreprise.siteWeb;
+
+        entreprises[msg.sender] = entreprise;
+    }
+
+    function creerEtudiant(Etudiant memory infoEtudiant) public {
+        Etudiant memory etudiant;
+        nombreEtudiant++;
+
+        etudiant.idEtudiant = nombreEtudiant;
+        etudiant.nom = infoEtudiant.nom;
+        etudiant.prenom = infoEtudiant.prenom;
+        etudiant.dateDeNaissance = infoEtudiant.dateDeNaissance;
+        etudiant.sexe = infoEtudiant.sexe;
+        etudiant.nationalite = infoEtudiant.nationalite;
+        etudiant.statutCivile = infoEtudiant.statutCivile;
+        etudiant.adresse = infoEtudiant.adresse;
+        etudiant.couriel = infoEtudiant.couriel;
+        etudiant.telephone = infoEtudiant.telephone;
+        etudiant.section = infoEtudiant.section;
+        etudiant.sujetPFE = infoEtudiant.sujetPFE;
+        etudiant.entrepriseStagePFE = infoEtudiant.entrepriseStagePFE;
+        etudiant.nomPrenomMaitreStage = infoEtudiant.nomPrenomMaitreStage;
+        etudiant.dateDebutStage = infoEtudiant.dateDebutStage;
+        etudiant.dateFinStage = infoEtudiant.dateFinStage;
+
+        etudiants[nombreEtudiant] = etudiant;
+    }
+
+    function creerDiplome(Diplome memory infoDiplome, uint256 idEtudiant) public {
+        Diplome memory diplome;
+        nombreDiplome++;
+
+        diplome.idDiplome = nombreDiplome;
+        diplome.idTitulaire = idEtudiant;
+        diplome.nomEes = etablissements[msg.sender].nomEes;
+        diplome.idEes = etablissements[msg.sender].idEes;
+        diplome.pays = infoDiplome.pays;
+        diplome.typeDiplome = infoDiplome.typeDiplome;
+        diplome.specialite = infoDiplome.specialite;
+        diplome.mention = infoDiplome.mention;
+        diplome.date = infoDiplome.date;
+
+        diplomes[nombreDiplome] = diplome;
     }
 }
