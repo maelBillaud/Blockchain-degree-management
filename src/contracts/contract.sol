@@ -20,8 +20,8 @@ contract DegreeToken is ERC20 {
 }
 
 contract DegreeManagement {
-    
-    struct EES {
+
+    struct Etablissement {
         uint256 idEes;
         string nom;
         string typeEtablissement;
@@ -44,7 +44,7 @@ contract DegreeManagement {
         string telephone;
         string section;
         string sujetPFE;
-        string entrepriseStagePFE;
+        uint256 entrepriseStagePFE; // Correspond à l'id de l'entreprise dans le struct Entreprise
         string nomPrenomMaitreStage;
         string dateDebutStage;
         string dateFinStage;
@@ -76,68 +76,107 @@ contract DegreeManagement {
         string date;
     }
 
-    // Tableau contenant tous les Etablissements
-    EES[] eesSet;
+    uint nombreEtablissement;
+    uint nombreEntreprise;
+    uint nombreEtudiant;
+    uint nombreDiplome;
 
-    // Tableau contenant tous les Etudiants
-    Etudiant[] etudiantSet;
+    mapping (address => Etablissement) public etablissements;
+    mapping (address => Entreprise) public entreprises;
+    mapping (uint => Etudiant) public etudiants;
+    mapping (uint => Diplome) public diplomes;
 
-    // Mapping avec pour clé l'id d'un Etudiant et pour valeur l'id d'un EES
-    mapping(uint => uint) public relationEtudiantEES;
-
-    /*
-     * Fonction de création d'un Etablissement d'Enseignmenet Supérieur avec ajout d'un agent
-     */
-    function creerEES(EES memory infoEes) public {
-        EES memory ees;
-        ees.idEes = (eesSet.length + 1);
-        ees.nom = infoEes.nom;
-        ees.typeEtablissement = infoEes.typeEtablissement;
-        ees.pays = infoEes.pays;
-        ees.adresse = infoEes.adresse;
-        ees.siteWeb = infoEes.siteWeb;
-        ees.idAgent = msg.sender;
-
-        eesSet.push(ees);
+    constructor() {
+        nombreEtablissement = 0;
+        nombreEtudiant = 0;
+        nombreEntreprise = 0;
+        nombreDiplome = 0;
     }
 
     /**
-     * Function qui retourne l'établissement dont l'idAgent est celui passé en paramèter de la fonction.
-     * Si l'agent en paramèter n'est associé à aucun établissment, on retourne un EES avec idEes = 0
+     * Retourne true si l'agent en paramètre est enregistré dans un établissement, sinon false
      */
-    function essParAgent(address _idAgent) private view returns(EES memory) {
-        bool agentAssocie = false;
-        uint i = 0;
-        while(!agentAssocie && (i < (eesSet.length))) {
-            agentAssocie = (_idAgent == eesSet[i].idAgent);
-            i++;
-        }
-
-        if (!agentAssocie) {
-            EES memory ees;
-            ees.idEes = 0;
-            return ees;
-        } else {
-            return eesSet[i];
-        }
+    function estAgentValideEtablissement (address agent) private returns (bool) {
+        Etablissement memory etablissement = etablissements[agent];
+        // On vérifie que l'idAgent est différent de 0 car si la clé (agent) n'existe pas dans le mapping,
+        // etablissement sera créé avec tous ses attributs avec des valeurs par défaut (ici 0).
+        // Comme un idAgent est toujours supérieur à 0, on peutl 'utiliser comme valeur témoin.
+        return (etablissement.idEes != 0);
     }
 
-    // Erreur qui est levée lorsqu'un agent n'étant assigné à aucun établissement essaie d'effectuer une action
+    /**
+     * Retourne true si l'agent en paramètre est enregistré dans une enterprise, sinon false
+     */
+    function estAgentValideEntreprise (address agent) private returns (bool) {
+        Entreprise memory entreprise = entreprises[agent];
+        return (entreprise.idEntreprise != 0);
+    }
+
+    /**
+     * Retourne true si les données sur l'étudiant en paramètre attestent qu'il a fait son stage de fin d'études 
+     * dans l'entreprise représentée par l'agent en paramètre, sinon false
+     */
+    function etudiantStageEntreprise(uint256 idEtudiant, address agent) private returns (bool) {
+        Etudiant memory etudiant = etudiants[idEtudiant];
+        Entreprise memory entreprise = entreprises[agent];
+        return (etudiant.entrepriseStagePFE == entreprise.idEntreprise);
+    }
+
+    // Erreur levée lorsqu'un agent non autorisé effectue une action
     error AgentInvalide(address agentRequested, string message);
 
-    /*
-     * Fonction de création de profil étudiant
+    // Erreur levée lorsqu'une entreprise tente d'évaluer un étudiant n'ayant pas fait son stage de fin d'étude en son sein
+    error EtudiantEntrepriseIncorrecte(uint256 etudiantRequested,address agentRequested, string message);
+
+    /**
+     * Créé un établissement
      */
-    function creerProfilEtudiant(Etudiant memory infoEtudiant) public {
-        EES memory eesRecrutant = essParAgent(msg.sender);
-        if(eesRecrutant.idEes == 0) {
-            revert AgentInvalide({
-                agentRequested: msg.sender,
-                message: "L'agent ayant initie la creation de l'etudiant n'est enregistre dans aucun EES"
-            });
-        } else {
+    function creerEtablissement (Etablissement memory infoEtablissement) public {
+        Etablissement memory etablissement;
+        nombreEtablissement++;
+
+        etablissement.idEes = nombreEtablissement;
+        etablissement.nom = infoEtablissement.nom;
+        etablissement.typeEtablissement = infoEtablissement.typeEtablissement;
+        etablissement.pays = infoEtablissement.pays;
+        etablissement.adresse = infoEtablissement.adresse;
+        etablissement.siteWeb = infoEtablissement.siteWeb;
+        etablissement.idAgent = msg.sender;
+
+        etablissements[msg.sender] = etablissement;
+    }
+
+    /**
+     * Créé une entreprise
+     */
+    function creerEntreprise (Entreprise memory infoEntreprise) public {
+        Entreprise memory entreprise;
+        nombreEntreprise++;
+
+        entreprise.idEntreprise = nombreEntreprise;
+        entreprise.nom = infoEntreprise.nom;
+        entreprise.secteur = infoEntreprise.secteur;
+        entreprise.dateCreation = infoEntreprise.dateCreation;
+        entreprise.classificationTaille = infoEntreprise.classificationTaille;
+        entreprise.pays = infoEntreprise.pays;
+        entreprise.adresse = infoEntreprise.adresse;
+        entreprise.courriel = infoEntreprise.courriel;
+        entreprise.telephone = infoEntreprise.telephone;
+        entreprise.siteWeb = infoEntreprise.siteWeb;
+
+        entreprises[msg.sender] = entreprise;
+        
+    }
+
+    /**
+     * Créé et sauvegarde un profil pour un étudiant
+     */
+    function creerEtudiant(Etudiant memory infoEtudiant) public {
+        if (estAgentValideEtablissement(msg.sender)) {
             Etudiant memory etudiant;
-            etudiant.idEtudiant = (etudiantSet.length + 1);
+            nombreEtudiant++;
+
+            etudiant.idEtudiant = nombreEtudiant;
             etudiant.nom = infoEtudiant.nom;
             etudiant.prenom = infoEtudiant.prenom;
             etudiant.dateDeNaissance = infoEtudiant.dateDeNaissance;
@@ -154,32 +193,77 @@ contract DegreeManagement {
             etudiant.dateDebutStage = infoEtudiant.dateDebutStage;
             etudiant.dateFinStage = infoEtudiant.dateFinStage;
 
-            etudiantSet.push(etudiant);
-            relationEtudiantEES[etudiant.idEtudiant] = eesRecrutant.idEes;
+            etudiants[nombreEtudiant] = etudiant;
+        } else {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie la creation de l'etudiant n'est enregistre dans aucun Etablissemnt d'Enseignement Superieur"
+            });
         }
     }
 
     /*
-     * Fonction de création puis d'assignation d'un diplôme
+     * Créé et assigne un diplôme
      */
     function creerDiplome(Diplome memory infoDiplome, uint256 idEtudiant) public {
-        EES memory eesRecrutant = essParAgent(msg.sender);
-        if(eesRecrutant.idEes == 0) {
-            revert AgentInvalide({
-                agentRequested: msg.sender,
-                message: "L'agent ayant initie la creation puis l'assignation d'un diplome n'est enregistre dans aucun EES"
-            });
-        } else {
+        if (estAgentValideEtablissement(msg.sender)) {
             Diplome memory diplome;
-            diplome.idDiplome = ????;
+            nombreDiplome++;
+
+            diplome.idDiplome = nombreDiplome;
             diplome.idTitulaire = idEtudiant;
-            diplome.nomEes = eesRecrutan.nom;
-            diplome.idEes = eesRecrutan.idEes;
+            diplome.nomEes = etablissements[msg.sender].nom;
+            diplome.idEes = etablissements[msg.sender].idEes;
             diplome.pays = infoDiplome.pays;
             diplome.typeDiplome = infoDiplome.typeDiplome;
             diplome.specialite = infoDiplome.specialite;
             diplome.mention = infoDiplome.mention;
             diplome.date = infoDiplome.date;
+
+            diplomes[nombreDiplome] = diplome;
+        } else {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie la creation du diplome n'est enregistre dans aucun Etablissemnt d'Enseignement Superieur"
+            });
         }
     }
+
+    /**
+     * Evalue un étudiant et rémunère l'évaluateur
+     */
+    function evaluerEtudiant(uint256 idEtudiant, string memory evalution) public {
+        if (estAgentValideEntreprise(msg.sender)) {
+            if (etudiantStageEntreprise(idEtudiant, msg.sender)) {
+                etudiants[idEtudiant].evaluation = evalution;
+                //Rémunération en tokens
+            } else {
+                revert EtudiantEntrepriseIncorrecte({
+                    etudiantRequested: idEtudiant,
+                    agentRequested: msg.sender,
+                    message: "L'etudiant evalue par l'agent ayant initie son evaluatio nn'a pas fait son stage de fin d'etude dans l'entreprise concernee"
+            });
+            }
+        } else {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie l'evaluation de l'etudiant n'est enregistre dans aucune Entreprise"
+            });
+        }
+    }
+
+    /**
+     * Permet à la boite d'acquérir des tokens
+     */
+    function acquerirToken() public {
+        //Utiliser les fonctions de l'ERC20 avec les balances ?
+    }
+
+    /**
+     * Vérifie l’authenticité d’un diplôme et paie les frais en tokens.
+     */
+    function verifierDiplome() public {
+         
+    }
+
 }
