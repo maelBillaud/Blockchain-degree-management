@@ -9,6 +9,8 @@ node_modules
 .env
 .deps
 src/contracts/artifacts
+.deps/remix-tests
+artifacts/build-info
 
 ### Solidity ###
 # Logs
