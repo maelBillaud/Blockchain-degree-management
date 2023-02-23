@@ -67,17 +67,14 @@ contract DegreeManagement {
     struct Diplome {
         uint256 idDiplome;
         uint256 idTitulaire;
-        string nomEES;
-        uint256 idEES;
+        string nomEes;
+        uint256 idEes;
         string pays;
         string typeDiplome;
         string specialite;
         string mention;
         string date;
     }
-    
-    // Relie un agent à une entreprise
-    mapping(address => Entreprise) public agentAEntreprise;
 
     // Tableau contenant tous les Etablissements
     EES[] eesSet;
@@ -125,7 +122,7 @@ contract DegreeManagement {
         }
     }
 
-    // Error lorsqu'un agent qui n'est pas affecté à un EES essaie d'ajouter un Etudiant
+    // Erreur qui est levée lorsqu'un agent n'étant assigné à aucun établissement essaie d'effectuer une action
     error AgentInvalide(address agentRequested, string message);
 
     /*
@@ -163,45 +160,26 @@ contract DegreeManagement {
     }
 
     /*
-     * Fonction de création d'entreprise
+     * Fonction de création puis d'assignation d'un diplôme
      */
-    function creerEntreprise(
-        string nom, 
-        string secteur, 
-        string dateCreation, 
-        string classificationTaille, 
-        string pays, 
-        string adresse, 
-        string courriel, 
-        string telephone, 
-        string siteWeb) public {
-            
-            // TODO : la méthode de Maël avec struct ou quelque chose
-            Entreprise memory entreprise = Entreprise(nom, secteur, dateCreation, classificationTaille, pays, adresse, courriel, telephone, siteWeb);
-
-            agentAEntreprise[msg.sender] = entreprise;
-    }
-
-    /*
-     * Vérifie si un agent de recrutement existe
-     */
-    function estAgentEntreprise(address agent) returns (bool) {
-        return agentAEntreprise[agent] > 0;
-    }
-
-    function estEtudiantEntreprise(Etudiant etudiant, address agent) returns (bool) {
-        return 
-    }
-
-    function evaluerEtudiantPFE(uint256 idEtudiant, string evaluation) {
-        if (!estAgentEntreprise(msg.sender)) {
+    function creerDiplome(Diplome memory infoDiplome, uint256 idEtudiant) public {
+        EES memory eesRecrutant = essParAgent(msg.sender);
+        if(eesRecrutant.idEes == 0) {
             revert AgentInvalide({
                 agentRequested: msg.sender,
-                message: "L'agent ayant initie l'evaluation de l'etudiant n'est enregistre pour aucune Entreprise"
+                message: "L'agent ayant initie la creation puis l'assignation d'un diplome n'est enregistre dans aucun EES"
             });
-        } else if (!estEtudiantEntreprise(etudiantSet.)) {
-
+        } else {
+            Diplome memory diplome;
+            diplome.idDiplome = ????;
+            diplome.idTitulaire = idEtudiant;
+            diplome.nomEes = eesRecrutan.nom;
+            diplome.idEes = eesRecrutan.idEes;
+            diplome.pays = infoDiplome.pays;
+            diplome.typeDiplome = infoDiplome.typeDiplome;
+            diplome.specialite = infoDiplome.specialite;
+            diplome.mention = infoDiplome.mention;
+            diplome.date = infoDiplome.date;
         }
     }
-
 }
