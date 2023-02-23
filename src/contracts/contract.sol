@@ -241,7 +241,7 @@ contract DegreeManagement {
                 revert EtudiantEntrepriseIncorrecte({
                     etudiantRequested: idEtudiant,
                     agentRequested: msg.sender,
-                    message: "L'etudiant evalue par l'agent ayant initie son evaluatio nn'a pas fait son stage de fin d'etude dans l'entreprise concernee"
+                    message: "L'etudiant evalue par l'agent ayant initie son evaluatio n'a pas fait son stage de fin d'etude dans l'entreprise concernee"
             });
             }
         } else {
@@ -255,7 +255,7 @@ contract DegreeManagement {
     /**
      * Permet à la boite d'acquérir des tokens
      */
-    function acquerirToken() public {
+    function acquerirToken(uint amount) public {
         //Utiliser les fonctions de l'ERC20 avec les balances ?
     }
 
