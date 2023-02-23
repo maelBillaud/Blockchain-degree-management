@@ -75,6 +75,9 @@ contract DegreeManagement {
         string mention;
         string date;
     }
+    
+    // Relie un agent à une entreprise
+    mapping(address => Entreprise) public agentAEntreprise;
 
     // Tableau contenant tous les Etablissements
     EES[] eesSet;
@@ -158,4 +161,47 @@ contract DegreeManagement {
             relationEtudiantEES[etudiant.idEtudiant] = eesRecrutant.idEes;
         }
     }
+
+    /*
+     * Fonction de création d'entreprise
+     */
+    function creerEntreprise(
+        string nom, 
+        string secteur, 
+        string dateCreation, 
+        string classificationTaille, 
+        string pays, 
+        string adresse, 
+        string courriel, 
+        string telephone, 
+        string siteWeb) public {
+            
+            // TODO : la méthode de Maël avec struct ou quelque chose
+            Entreprise memory entreprise = Entreprise(nom, secteur, dateCreation, classificationTaille, pays, adresse, courriel, telephone, siteWeb);
+
+            agentAEntreprise[msg.sender] = entreprise;
+    }
+
+    /*
+     * Vérifie si un agent de recrutement existe
+     */
+    function estAgentEntreprise(address agent) returns (bool) {
+        return agentAEntreprise[agent] > 0;
+    }
+
+    function estEtudiantEntreprise(Etudiant etudiant, address agent) returns (bool) {
+        return 
+    }
+
+    function evaluerEtudiantPFE(uint256 idEtudiant, string evaluation) {
+        if (!estAgentEntreprise(msg.sender)) {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie l'evaluation de l'etudiant n'est enregistre pour aucune Entreprise"
+            });
+        } else if (!estEtudiantEntreprise(etudiantSet.)) {
+
+        }
+    }
+
 }
