@@ -77,8 +77,8 @@ contract DegreeManagement {
     }
     EES[] eesSet; 
 
-    function creerEES(string nom, string typeE, string pays, string adr, string site) {
-        EES ees;
+    function creerEES(string memory nom, string memory typeE, string memory pays, string memory adr, string memory site) public {
+        EES memory ees;
         ees.idEes = eesSet.length;
         ees.nom = nom;
         ees.typeEtablissement = typeE;
@@ -88,5 +88,26 @@ contract DegreeManagement {
         ees.idAgent = msg.sender;
 
         eesSet.push(ees);
+    }
+
+    /**
+     * Function qui retourne true si un agent est enregistré dans notre liste d'établissement, sinon false 
+     */
+    function isAgentValid(address agentId) private returns (bool) {
+        bool _isAgentValid = false;
+        int i = 0;
+        while(!_isAgentValid && (i < (eesSet.length))) {
+            _isAgentValid = (agentId == eesSet[i].idAgent);
+            i++;
+        }
+        return _isAgentValid;
+    }
+
+    function creerProfilEtudiant() public {
+        if(isAgentValid(msg.sender)) {
+
+        } else {
+            //erreur a implémenter
+        }
     }
 }
