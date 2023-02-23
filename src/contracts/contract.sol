@@ -88,14 +88,14 @@ contract DegreeManagement {
     /*
      * Fonction de création d'un Etablissement d'Enseignmenet Supérieur avec ajout d'un agent
      */
-    function creerEES(string memory nom, string memory typeE, string memory pays, string memory adr, string memory site) public {
+    function creerEES(EES memory infoEes) public {
         EES memory ees;
-        ees.idEes = eesSet.length + 1;
-        ees.nom = nom;
-        ees.typeEtablissement = typeE;
-        ees.pays = pays;
-        ees.adresse = adr;
-        ees.siteWeb = site;
+        ees.idEes = (eesSet.length + 1);
+        ees.nom = infoEes.nom;
+        ees.typeEtablissement = infoEes.typeEtablissement;
+        ees.pays = infoEes.pays;
+        ees.adresse = infoEes.adresse;
+        ees.siteWeb = infoEes.siteWeb;
         ees.idAgent = msg.sender;
 
         eesSet.push(ees);
@@ -105,7 +105,7 @@ contract DegreeManagement {
      * Function qui retourne l'établissement dont l'idAgent est celui passé en paramèter de la fonction.
      * Si l'agent en paramèter n'est associé à aucun établissment, on retourne un EES avec idEes = 0
      */
-    function essParAgent(address _idAgent) private view returns(EES) {
+    function essParAgent(address _idAgent) private view returns(EES memory) {
         bool agentAssocie = false;
         uint i = 0;
         while(!agentAssocie && (i < (eesSet.length))) {
@@ -128,23 +128,7 @@ contract DegreeManagement {
     /*
      * Fonction de création de profil étudiant
      */
-    function creerProfilEtudiant(
-        string memory nom, 
-        string memory prenom, 
-        string memory dateDeNaissance, 
-        string memory sexe, 
-        string memory nationalite, 
-        string memory statutCivile, 
-        string memory adresse, 
-        string memory couriel, 
-        string memory telephone, 
-        string memory section, 
-        string memory sujetPFE, 
-        string memory entrepriseStagePFE, 
-        string memory nomPrenomMaitreStage,
-        string memory dateDebutStage, 
-        string memory dateFinStage
-    ) public {
+    function creerProfilEtudiant(Etudiant memory infoEtudiant) public {
         EES memory eesRecrutant = essParAgent(msg.sender);
         if(eesRecrutant.idEes == 0) {
             revert AgentInvalide({
@@ -153,22 +137,22 @@ contract DegreeManagement {
             });
         } else {
             Etudiant memory etudiant;
-            etudiant.id = (etudiantSet.length + 1);
-            etudiant.nom = nom;
-            etudiant.prenom = prenom;
-            etudiant.dateDeNaissance = dateDeNaissance;
-            etudiant.sexe = sexe;
-            etudiant.nationalite = nationalite;
-            etudiant.statutCivile = statutCivile;
-            etudiant.adresse = adresse;
-            etudiant.couriel = couriel;
-            etudiant.telephone = telephone;
-            etudiant.section = section;
-            etudiant.sujetPFE = sujetPFE;
-            etudiant.entrepriseStagePFE = entrepriseStagePFE;
-            etudiant.nomPrenomMaitreStage = nomPrenomMaitreStage;
-            etudiant.dateDebutStage = dateDebutStage;
-            etudiant.dateFinStage = dateFinStage;
+            etudiant.idEtudiant = (etudiantSet.length + 1);
+            etudiant.nom = infoEtudiant.nom;
+            etudiant.prenom = infoEtudiant.prenom;
+            etudiant.dateDeNaissance = infoEtudiant.dateDeNaissance;
+            etudiant.sexe = infoEtudiant.sexe;
+            etudiant.nationalite = infoEtudiant.nationalite;
+            etudiant.statutCivile = infoEtudiant.statutCivile;
+            etudiant.adresse = infoEtudiant.adresse;
+            etudiant.couriel = infoEtudiant.couriel;
+            etudiant.telephone = infoEtudiant.telephone;
+            etudiant.section = infoEtudiant.section;
+            etudiant.sujetPFE = infoEtudiant.sujetPFE;
+            etudiant.entrepriseStagePFE = infoEtudiant.entrepriseStagePFE;
+            etudiant.nomPrenomMaitreStage = infoEtudiant.nomPrenomMaitreStage;
+            etudiant.dateDebutStage = infoEtudiant.dateDebutStage;
+            etudiant.dateFinStage = infoEtudiant.dateFinStage;
 
             etudiantSet.push(etudiant);
             relationEtudiantEES[etudiant.idEtudiant] = eesRecrutant.idEes;
