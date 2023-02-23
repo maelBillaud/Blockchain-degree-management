@@ -44,7 +44,7 @@ contract DegreeManagement {
         string telephone;
         string section;
         string sujetPFE;
-        string entrepriseStagePFA;
+        string entrepriseStagePFE;
         string nomPrenomMaitreStage;
         string dateDebutStage;
         string dateFinStage;
@@ -75,11 +75,22 @@ contract DegreeManagement {
         string mention;
         string date;
     }
-    EES[] eesSet; 
 
+    // Tableau contenant tous les Etablissements
+    EES[] eesSet;
+
+    // Tableau contenant tous les Etudiants
+    Etudiant[] etudiantSet;
+
+    // Mapping avec pour clé l'id d'un Etudiant et pour valeur l'id d'un EES
+    mapping(uint => uint) public relationEtudiantEES;
+
+    /*
+     * Fonction de création d'un Etablissement d'Enseignmenet Supérieur avec ajout d'un agent
+     */
     function creerEES(string memory nom, string memory typeE, string memory pays, string memory adr, string memory site) public {
         EES memory ees;
-        ees.idEes = eesSet.length;
+        ees.idEes = eesSet.length + 1;
         ees.nom = nom;
         ees.typeEtablissement = typeE;
         ees.pays = pays;
@@ -91,23 +102,76 @@ contract DegreeManagement {
     }
 
     /**
-     * Function qui retourne true si un agent est enregistré dans notre liste d'établissement, sinon false 
+     * Function qui retourne l'établissement dont l'idAgent est celui passé en paramèter de la fonction.
+     * Si l'agent en paramèter n'est associé à aucun établissment, on retourne un EES avec idEes = 0
      */
-    function isAgentValid(address agentId) private returns (bool) {
-        bool _isAgentValid = false;
-        int i = 0;
-        while(!_isAgentValid && (i < (eesSet.length))) {
-            _isAgentValid = (agentId == eesSet[i].idAgent);
+    function essParAgent(address _idAgent) private view returns(EES) {
+        bool agentAssocie = false;
+        uint i = 0;
+        while(!agentAssocie && (i < (eesSet.length))) {
+            agentAssocie = (_idAgent == eesSet[i].idAgent);
             i++;
         }
-        return _isAgentValid;
+
+        if (!agentAssocie) {
+            EES memory ees;
+            ees.idEes = 0;
+            return ees;
+        } else {
+            return eesSet[i];
+        }
     }
 
-    function creerProfilEtudiant() public {
-        if(isAgentValid(msg.sender)) {
+    // Error lorsqu'un agent qui n'est pas affecté à un EES essaie d'ajouter un Etudiant
+    error AgentInvalide(address agentRequested, string message);
 
+    /*
+     * Fonction de création de profil étudiant
+     */
+    function creerProfilEtudiant(
+        string memory nom, 
+        string memory prenom, 
+        string memory dateDeNaissance, 
+        string memory sexe, 
+        string memory nationalite, 
+        string memory statutCivile, 
+        string memory adresse, 
+        string memory couriel, 
+        string memory telephone, 
+        string memory section, 
+        string memory sujetPFE, 
+        string memory entrepriseStagePFE, 
+        string memory nomPrenomMaitreStage,
+        string memory dateDebutStage, 
+        string memory dateFinStage
+    ) public {
+        EES memory eesRecrutant = essParAgent(msg.sender);
+        if(eesRecrutant.idEes == 0) {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie la creation de l'etudiant n'est enregistre dans aucun EES"
+            });
         } else {
-            //erreur a implémenter
+            Etudiant memory etudiant;
+            etudiant.id = (etudiantSet.length + 1);
+            etudiant.nom = nom;
+            etudiant.prenom = prenom;
+            etudiant.dateDeNaissance = dateDeNaissance;
+            etudiant.sexe = sexe;
+            etudiant.nationalite = nationalite;
+            etudiant.statutCivile = statutCivile;
+            etudiant.adresse = adresse;
+            etudiant.couriel = couriel;
+            etudiant.telephone = telephone;
+            etudiant.section = section;
+            etudiant.sujetPFE = sujetPFE;
+            etudiant.entrepriseStagePFE = entrepriseStagePFE;
+            etudiant.nomPrenomMaitreStage = nomPrenomMaitreStage;
+            etudiant.dateDebutStage = dateDebutStage;
+            etudiant.dateFinStage = dateFinStage;
+
+            etudiantSet.push(etudiant);
+            relationEtudiantEES[etudiant.idEtudiant] = eesRecrutant.idEes;
         }
     }
 }
