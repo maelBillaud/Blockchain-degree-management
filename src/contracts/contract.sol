@@ -28,7 +28,7 @@ contract DegreeManagement {
         string pays;
         string adresse;
         string siteWeb;
-        string idAgent;
+        address idAgent;
     }
 
     struct Etudiant {
@@ -74,5 +74,19 @@ contract DegreeManagement {
         string specialite;
         string mention;
         string date;
+    }
+    EES[] eesSet; 
+
+    function creerEES(string nom, string typeE, string pays, string adr, string site) {
+        EES ees;
+        ees.idEes = eesSet.length;
+        ees.nom = nom;
+        ees.typeEtablissement = typeE;
+        ees.pays = pays;
+        ees.adresse = adr;
+        ees.siteWeb = site;
+        ees.idAgent = msg.sender;
+
+        eesSet.push(ees);
     }
 }
