@@ -75,7 +75,9 @@ contract DegreeManagement {
         string mention;
         string date;
     }
-    EES[] eesSet; 
+    EES[] eesSet;
+    
+    mapping(address => Entreprise) public agentToEntreprise;
 
     function creerEES(string memory nom, string memory typeE, string memory pays, string memory adr, string memory site) public {
         EES memory ees;
@@ -110,4 +112,30 @@ contract DegreeManagement {
             //erreur a implémenter
         }
     }
+
+    function creerEntreprise(
+        string nom, 
+        string secteur, 
+        string dateCreation, 
+        string classificationTaille, 
+        string pays, 
+        string adresse, 
+        string courriel, 
+        string telephone, 
+        string siteWeb) public {
+            
+            // TODO
+            Entreprise memory entreprise = Entreprise(nom, secteur, dateCreation, classificationTaille, pays, adresse, courriel, telephone, siteWeb);
+
+            agentToEntreprise[msg.sender] = entreprise;
+    }
+
+    function isAgentOfEntreprise() returns (bool) {
+
+    }
+
+    function evaluerEtudiantPFE(uint256 idEtudiant, string evaluation) {
+        
+    }
+
 }
