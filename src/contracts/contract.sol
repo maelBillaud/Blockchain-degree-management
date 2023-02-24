@@ -76,6 +76,8 @@ contract DegreeManagement {
         string date;
     }
 
+    DegreeToken dt;
+
     uint public constant FRAIS_DE_VERIFICATION_DE_DIPLOME = 10 * (10 ** uint256(dt.decimals()));
     uint public constant REMUNERATION_EVALUATION_ETUDIANT = 15 * (10 ** uint256(dt.decimals()));
 
