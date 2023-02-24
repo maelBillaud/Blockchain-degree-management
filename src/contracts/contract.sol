@@ -289,7 +289,7 @@ contract DegreeManagement {
         if (estAgentValideEntreprise(msg.sender)) {
             // require(dt.balance[msg.sender] >= FRAIS_DE_VERIFICATION_DE_DIPLOME, "ERC20: transfer amount exceeds balance");
             
-            dt._transfer(dt.deployerAddress(), msg.sender, FRAIS_DE_VERIFICATION_DE_DIPLOME);
+            dt.DTOKTransfert(dt.deployerAddress(), msg.sender, FRAIS_DE_VERIFICATION_DE_DIPLOME);
             
             Diplome memory diplome = diplomes[idDiplome];
 
