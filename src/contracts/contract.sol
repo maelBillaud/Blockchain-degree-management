@@ -83,8 +83,9 @@ contract DegreeManagement {
 
     mapping (address => Etablissement) public etablissements;
     mapping (address => Entreprise) public entreprises;
-    mapping (uint => Etudiant) public etudiants;
-    mapping (uint => Diplome) public diplomes;
+    mapping (uint256 => Etudiant) public etudiants;
+    mapping (uint256 => Diplome) public diplomes;
+    mapping (uint256 => uint256) public etudiantEtablissement; // Mapping qui permet de retrouver l'id de l'établissement d'un étudiant
 
     constructor() {
         nombreEtablissement = 0;
@@ -96,7 +97,7 @@ contract DegreeManagement {
     /**
      * Retourne true si l'agent en paramètre est enregistré dans un établissement, sinon false
      */
-    function estAgentValideEtablissement (address agent) private returns (bool) {
+    function estAgentValideEtablissement (address agent) private view returns (bool) {
         Etablissement memory etablissement = etablissements[agent];
         // On vérifie que l'idAgent est différent de 0 car si la clé (agent) n'existe pas dans le mapping,
         // etablissement sera créé avec tous ses attributs avec des valeurs par défaut (ici 0).
@@ -107,7 +108,7 @@ contract DegreeManagement {
     /**
      * Retourne true si l'agent en paramètre est enregistré dans une enterprise, sinon false
      */
-    function estAgentValideEntreprise (address agent) private returns (bool) {
+    function estAgentValideEntreprise (address agent) private view returns (bool) {
         Entreprise memory entreprise = entreprises[agent];
         return (entreprise.idEntreprise != 0);
     }
@@ -116,10 +117,25 @@ contract DegreeManagement {
      * Retourne true si les données sur l'étudiant en paramètre attestent qu'il a fait son stage de fin d'études 
      * dans l'entreprise représentée par l'agent en paramètre, sinon false
      */
-    function etudiantStageEntreprise(uint256 idEtudiant, address agent) private returns (bool) {
+    function etudiantStageEntreprise(uint256 idEtudiant, address agent) private view returns (bool) {
         Etudiant memory etudiant = etudiants[idEtudiant];
         Entreprise memory entreprise = entreprises[agent];
         return (etudiant.entrepriseStagePFE == entreprise.idEntreprise);
+    }
+
+    /**
+     * Retourne true si l'étudiant en paramètre est enregistré dans un établissement, sinon false
+     */
+    function estEtudiantValide (uint256 idEtudiant) private view returns (bool) {
+        Etudiant memory etudiant = etudiants[idEtudiant];
+        return (etudiant.idEtudiant != 0);
+    }
+    
+    /**
+     * Retourne true si l'étudiant en paramètre est lié à l'établissement en paramètre, sinon false
+     */
+    function estEtudiantValideDansEtablissement (uint256 idEtudiant, uint256 idEes) private view returns (bool) {
+        return (etudiantEtablissement[idEtudiant] == idEes);
     }
 
     // Erreur levée lorsqu'un agent non autorisé effectue une action
@@ -127,6 +143,9 @@ contract DegreeManagement {
 
     // Erreur levée lorsqu'une entreprise tente d'évaluer un étudiant n'ayant pas fait son stage de fin d'étude en son sein
     error EtudiantEntrepriseIncorrecte(uint256 etudiantRequested,address agentRequested, string message);
+
+    // Erreur levée lorsqu'un diplome est détecté comme invalide  
+    error DiplomeInvalide(uint256 diplomeRequested, uint256 idChecked, string message);
 
     /**
      * Créé un établissement
@@ -194,6 +213,7 @@ contract DegreeManagement {
             etudiant.dateFinStage = infoEtudiant.dateFinStage;
 
             etudiants[nombreEtudiant] = etudiant;
+            etudiantEtablissement[nombreEtudiant] = etablissements[msg.sender].idEes;
         } else {
             revert AgentInvalide({
                 agentRequested: msg.sender,
@@ -262,8 +282,35 @@ contract DegreeManagement {
     /**
      * Vérifie l’authenticité d’un diplôme et paie les frais en tokens.
      */
-    function verifierDiplome() public {
-         
-    }
+    function verifierDiplome(uint256 idDiplome) public {
+        if (estAgentValideEntreprise(msg.sender)) {
+            // Vérifier que le msg.sender a bien assez d'argent dans sa balance
+            
+            Diplome memory diplome = diplomes[idDiplome];
 
+            if(!estEtudiantValide(diplome.idTitulaire)) {
+                revert DiplomeInvalide({
+                    diplomeRequested: idDiplome,
+                    idChecked: diplome.idTitulaire,
+                    message: "L'etudiant titulaire du diplome n'est enregistre dans aucun etablissements, le diplome n'est donc pas valide"
+                });
+            }
+            
+            if(!estEtudiantValideDansEtablissement(diplome.idTitulaire, diplome.idEes)) {
+                revert DiplomeInvalide({
+                    diplomeRequested: idDiplome,
+                    idChecked: diplome.idEes,
+                    message: "L'etudiant titulaire du diplome n'est pas enregistre dans l'etablissement ayant delivre le diplome, le diplome n'est donc pas valide"
+                });
+            }
+
+            // Debiter le msg.sender de 10 tokens
+          
+        } else {
+            revert AgentInvalide({
+                agentRequested: msg.sender,
+                message: "L'agent ayant initie la verification du diplome n'est enregistre dans aucune Entreprise"
+            });
+        }
+    }
 }
