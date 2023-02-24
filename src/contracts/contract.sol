@@ -76,6 +76,9 @@ contract DegreeManagement {
         string date;
     }
 
+    uint public constant FRAIS_DE_VERIFICATION_DE_DIPLOME = 10 * (10 ** uint256(dt.decimals()));
+    uint public constant REMUNERATION_EVALUATION_ETUDIANT = 15 * (10 ** uint256(dt.decimals()));
+
     uint nombreEtablissement;
     uint nombreEntreprise;
     uint nombreEtudiant;
@@ -255,8 +258,8 @@ contract DegreeManagement {
     function evaluerEtudiant(uint256 idEtudiant, string memory evalution) public {
         if (estAgentValideEntreprise(msg.sender)) {
             if (etudiantStageEntreprise(idEtudiant, msg.sender)) {
+                require(etudiants[idEtudiant].evaluation == "", "L'etudiant a deja ete evalue");
                 etudiants[idEtudiant].evaluation = evalution;
-                //Rémunération en tokens
             } else {
                 revert EtudiantEntrepriseIncorrecte({
                     etudiantRequested: idEtudiant,
@@ -284,7 +287,9 @@ contract DegreeManagement {
      */
     function verifierDiplome(uint256 idDiplome) public {
         if (estAgentValideEntreprise(msg.sender)) {
-            // Vérifier que le msg.sender a bien assez d'argent dans sa balance
+            // require(dt.balance[msg.sender] >= FRAIS_DE_VERIFICATION_DE_DIPLOME, "ERC20: transfer amount exceeds balance");
+            
+            dt._transfer(dt.deployerAddress(), msg.sender, FRAIS_DE_VERIFICATION_DE_DIPLOME);
             
             Diplome memory diplome = diplomes[idDiplome];
 
@@ -303,8 +308,6 @@ contract DegreeManagement {
                     message: "L'etudiant titulaire du diplome n'est pas enregistre dans l'etablissement ayant delivre le diplome, le diplome n'est donc pas valide"
                 });
             }
-
-            // Debiter le msg.sender de 10 tokens
           
         } else {
             revert AgentInvalide({
