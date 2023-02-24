@@ -11,11 +11,22 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  */
 contract DegreeToken is ERC20 {
 
+    address private deployer;
+
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
     constructor () ERC20("DegreeToken", "DTOK") {
         _mint(msg.sender, 1000000 * (10 ** uint256(decimals())));
+        deployer = msg.sender;
+    }
+
+    function deployerAddress () public view returns (address) {
+        return deployer;
+    }
+
+    function DTOKTransfer(address from, address to, uint value) public {
+        _transfer(from, to, value);
     }
 }
 
@@ -78,8 +89,8 @@ contract DegreeManagement {
 
     DegreeToken dt;
 
-    uint public constant FRAIS_DE_VERIFICATION_DE_DIPLOME = 10 * (10 ** uint256(dt.decimals()));
-    uint public constant REMUNERATION_EVALUATION_ETUDIANT = 15 * (10 ** uint256(dt.decimals()));
+    uint public constant FRAIS_DE_VERIFICATION_DE_DIPLOME = 10;
+    uint public constant REMUNERATION_EVALUATION_ETUDIANT = 15;
 
     uint nombreEtablissement;
     uint nombreEntreprise;
@@ -141,6 +152,13 @@ contract DegreeManagement {
      */
     function estEtudiantValideDansEtablissement (uint256 idEtudiant, uint256 idEes) private view returns (bool) {
         return (etudiantEtablissement[idEtudiant] == idEes);
+    }
+
+    /**
+     * Retourne true si les deux strings sont identiques, sinon false
+     */
+    function compareString(string memory str1, string memory str2) public pure returns (bool) {
+        return keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2));
     }
 
     // Erreur levée lorsqu'un agent non autorisé effectue une action
@@ -260,8 +278,9 @@ contract DegreeManagement {
     function evaluerEtudiant(uint256 idEtudiant, string memory evalution) public {
         if (estAgentValideEntreprise(msg.sender)) {
             if (etudiantStageEntreprise(idEtudiant, msg.sender)) {
-                require(etudiants[idEtudiant].evaluation == "", "L'etudiant a deja ete evalue");
+                require(compareString(etudiants[idEtudiant].evaluation, ""), "L'etudiant a deja ete evalue");
                 etudiants[idEtudiant].evaluation = evalution;
+                dt.DTOKTransfer(dt.deployerAddress(), msg.sender, REMUNERATION_EVALUATION_ETUDIANT * (10 ** uint256(dt.decimals())));
             } else {
                 revert EtudiantEntrepriseIncorrecte({
                     etudiantRequested: idEtudiant,
@@ -278,10 +297,13 @@ contract DegreeManagement {
     }
 
     /**
-     * Permet à la boite d'acquérir des tokens
+     * Permet à l'entreprise d'acquérir des tokens
      */
-    function acquerirToken(uint amount) public {
+    function acquerirToken() public payable {
         //Utiliser les fonctions de l'ERC20 avec les balances ?
+        uint tknToBuy = msg.value * 100; //Rapport de 100 (1 ether = 100 degreeTkn)
+        require (dt.balanceOf(dt.deployerAddress()) - tknToBuy >= 0, "Transaction annulee, pas assez de token en banque");
+        dt.DTOKTransfer(dt.deployerAddress(), msg.sender, tknToBuy);
     }
 
     /**
@@ -289,9 +311,8 @@ contract DegreeManagement {
      */
     function verifierDiplome(uint256 idDiplome) public {
         if (estAgentValideEntreprise(msg.sender)) {
-            // require(dt.balance[msg.sender] >= FRAIS_DE_VERIFICATION_DE_DIPLOME, "ERC20: transfer amount exceeds balance");
             
-            dt.DTOKTransfert(dt.deployerAddress(), msg.sender, FRAIS_DE_VERIFICATION_DE_DIPLOME);
+            dt.DTOKTransfer(dt.deployerAddress(), msg.sender, FRAIS_DE_VERIFICATION_DE_DIPLOME * (10 ** uint256(dt.decimals())));
             
             Diplome memory diplome = diplomes[idDiplome];
 
